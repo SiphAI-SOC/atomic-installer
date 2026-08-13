@@ -77,7 +77,7 @@ fn classify_key(event: KeyEvent) -> Option<MenuAction> {
         (KeyCode::Down, _) => Some(MenuAction::Down),
         (KeyCode::Enter, _) => Some(MenuAction::Confirm),
         (KeyCode::Char('c'), KeyModifiers::CONTROL) => Some(MenuAction::Abort),
-        (KeyCode::Char(c), KeyModifiers::NONE) if c.is_ascii_digit() => {
+        (KeyCode::Char(c), KeyModifiers::NONE) if ('1'..='9').contains(&c) => {
             Some(MenuAction::Jump((c as u8 - b'1') as usize))
         }
         _ => None,
@@ -143,7 +143,10 @@ fn arrow_menu(
             Event::Key(key) => classify_key(key),
             _ => None,
         };
-        let outcome = action.map_or(MenuOutcome::Move, |a| apply(state, a));
+        let outcome = match action {
+            Some(a) => apply(state, a),
+            None => continue,
+        };
         match outcome {
             MenuOutcome::Confirm => return Ok(state.cursor),
             MenuOutcome::Abort => anyhow::bail!("aborted by user"),
@@ -347,6 +350,7 @@ mod tests {
             classify_key(key(KeyCode::Char('2'))),
             Some(MenuAction::Jump(1))
         );
+        assert_eq!(classify_key(key(KeyCode::Char('0'))), None);
         assert_eq!(classify_key(key(KeyCode::Char('x'))), None);
     }
 
