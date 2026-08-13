@@ -19,13 +19,6 @@ impl Os {
             Os::Linux => "Linux",
         }
     }
-
-    pub fn token(&self) -> &'static str {
-        match self {
-            Os::Macos => "osx",
-            Os::Linux => "linux",
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -49,13 +42,6 @@ impl Arch {
             Arch::X86 => "x86",
         }
     }
-
-    pub fn token(&self) -> &'static str {
-        match self {
-            Arch::Arm => "arm",
-            Arch::X86 => "x",
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -77,13 +63,6 @@ impl Bit {
         match self {
             Bit::Bit32 => "32-bit",
             Bit::Bit64 => "64-bit",
-        }
-    }
-
-    pub fn token(&self) -> &'static str {
-        match self {
-            Bit::Bit32 => "32",
-            Bit::Bit64 => "64",
         }
     }
 }
