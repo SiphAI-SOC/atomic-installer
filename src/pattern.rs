@@ -19,6 +19,12 @@ impl Os {
             Os::Linux => "Linux",
         }
     }
+
+    /// The host OS from `std::env::consts`, if supported.
+    #[allow(dead_code)]
+    pub fn detect() -> Option<Os> {
+        Os::parse(std::env::consts::OS)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -31,7 +37,7 @@ impl Arch {
     pub fn parse(s: &str) -> Option<Arch> {
         match s.to_ascii_lowercase().as_str() {
             "arm" | "aarch64" | "arm64" => Some(Arch::Arm),
-            "x86" | "x64" | "amd64" | "intel" => Some(Arch::X86),
+            "x86" | "x64" | "amd64" | "x86_64" | "intel" => Some(Arch::X86),
             _ => None,
         }
     }
@@ -41,6 +47,12 @@ impl Arch {
             Arch::Arm => "ARM",
             Arch::X86 => "x86",
         }
+    }
+
+    /// The host CPU architecture from `std::env::consts`, if supported.
+    #[allow(dead_code)]
+    pub fn detect() -> Option<Arch> {
+        Arch::parse(std::env::consts::ARCH)
     }
 }
 
@@ -220,5 +232,27 @@ mod tests {
         assert_eq!(Arch::parse("x64"), Some(Arch::X86));
         assert_eq!(Bit::parse("32"), Some(Bit::Bit32));
         assert_eq!(Bit::parse("64"), Some(Bit::Bit64));
+    }
+
+    #[test]
+    fn detect_delegates_to_parse() {
+        assert_eq!(Os::detect(), Os::parse(std::env::consts::OS));
+        assert_eq!(Arch::detect(), Arch::parse(std::env::consts::ARCH));
+    }
+
+    #[test]
+    fn env_const_strings_are_parseable() {
+        assert_eq!(Os::parse("macos"), Some(Os::Macos));
+        assert_eq!(Os::parse("linux"), Some(Os::Linux));
+        assert_eq!(Arch::parse("aarch64"), Some(Arch::Arm));
+        assert_eq!(Arch::parse("x86_64"), Some(Arch::X86));
+    }
+
+    #[test]
+    fn unsupported_hosts_are_not_detected() {
+        assert_eq!(Os::parse("windows"), None);
+        assert_eq!(Os::parse("freebsd"), None);
+        assert_eq!(Arch::parse("riscv64"), None);
+        assert_eq!(Arch::parse("powerpc64"), None);
     }
 }
