@@ -62,7 +62,8 @@ pub fn download_bytes(url: &str, label: &str) -> Result<Vec<u8>, anyhow::Error> 
 }
 
 pub fn sha256_of_file(path: &Path) -> Result<String, anyhow::Error> {
-    let mut file = File::open(path).with_context(|| format!("failed to open {}", path.display()))?;
+    let mut file =
+        File::open(path).with_context(|| format!("failed to open {}", path.display()))?;
     let mut hasher = Sha256::new();
     let mut buf = [0u8; 64 * 1024];
     loop {
@@ -147,6 +148,9 @@ mod tests {
         let out_dir = dir.path().join("out");
         std::fs::create_dir(&out_dir).unwrap();
         extract_tar_gz(&src, &out_dir).unwrap();
-        assert_eq!(std::fs::read(out_dir.join("pwsh")).unwrap(), b"pwsh-binary-bytes");
+        assert_eq!(
+            std::fs::read(out_dir.join("pwsh")).unwrap(),
+            b"pwsh-binary-bytes"
+        );
     }
 }

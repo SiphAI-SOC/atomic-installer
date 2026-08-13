@@ -44,7 +44,9 @@ fn real_main() -> Result<(), anyhow::Error> {
     };
 
     println!("=== atomic-installer ===");
-    println!("[INFO] installs PowerShell from the latest GitHub release, links pwsh, and installs Atomic Red Team");
+    println!(
+        "[INFO] installs PowerShell from the latest GitHub release, links pwsh, and installs Atomic Red Team"
+    );
     println!();
 
     let home = std::env::var("HOME").context("HOME environment variable is not set")?;
@@ -63,9 +65,7 @@ fn real_main() -> Result<(), anyhow::Error> {
     );
 
     if !args.force && pwsh_works(&pwsh_link)? {
-        println!(
-            "[INFO] pwsh is already installed and working; skipping the PowerShell install"
-        );
+        println!("[INFO] pwsh is already installed and working; skipping the PowerShell install");
     } else {
         install_powershell(
             &platform,

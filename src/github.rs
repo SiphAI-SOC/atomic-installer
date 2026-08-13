@@ -115,17 +115,32 @@ mod tests {
         assert_eq!(release.tag, "v7.6.4");
         assert_eq!(release.version, "7.6.4");
         assert_eq!(release.assets.len(), 2);
-        assert_eq!(release.assets[0].url, "https://x/powershell-7.6.4-osx-arm64.tar.gz");
+        assert_eq!(
+            release.assets[0].url,
+            "https://x/powershell-7.6.4-osx-arm64.tar.gz"
+        );
     }
 
     #[test]
     fn find_asset_requires_exact_name_match() {
         let assets = vec![
-            Asset { name: "powershell-7.6.4-linux-musl-x64.tar.gz".to_string(), url: "u1".to_string() },
-            Asset { name: "powershell-7.6.4-linux-x64.tar.gz".to_string(), url: "u2".to_string() },
+            Asset {
+                name: "powershell-7.6.4-linux-musl-x64.tar.gz".to_string(),
+                url: "u1".to_string(),
+            },
+            Asset {
+                name: "powershell-7.6.4-linux-x64.tar.gz".to_string(),
+                url: "u2".to_string(),
+            },
         ];
-        assert_eq!(find_asset(&assets, "powershell-7.6.4-linux-x64.tar.gz").map(|a| a.url.as_str()), Some("u2"));
-        assert_eq!(find_asset(&assets, "powershell-7.6.4-linux-arm64.tar.gz"), None);
+        assert_eq!(
+            find_asset(&assets, "powershell-7.6.4-linux-x64.tar.gz").map(|a| a.url.as_str()),
+            Some("u2")
+        );
+        assert_eq!(
+            find_asset(&assets, "powershell-7.6.4-linux-arm64.tar.gz"),
+            None
+        );
     }
 
     #[test]

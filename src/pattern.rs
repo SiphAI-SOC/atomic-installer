@@ -91,7 +91,11 @@ impl Platform {
         if bits.contains(&bit) {
             Ok(Platform { os, arch, bit })
         } else {
-            let opts = bits.iter().map(|b| b.label()).collect::<Vec<_>>().join(" or ");
+            let opts = bits
+                .iter()
+                .map(|b| b.label())
+                .collect::<Vec<_>>()
+                .join(" or ");
             Err(format!(
                 "invalid combination: {} {} {} has no PowerShell tar.gz asset; supported bit type(s): {}",
                 os.label(),
@@ -119,7 +123,12 @@ impl Platform {
     }
 
     pub fn describe(&self) -> String {
-        format!("{} {} {}", self.os.label(), self.arch.label(), self.bit.label())
+        format!(
+            "{} {} {}",
+            self.os.label(),
+            self.arch.label(),
+            self.bit.label()
+        )
     }
 }
 
@@ -129,11 +138,36 @@ mod tests {
 
     #[test]
     fn valid_combinations_have_correct_tokens() {
-        assert_eq!(Platform::from_parts(Os::Macos, Arch::Arm, Bit::Bit64).unwrap().token(), "osx-arm64");
-        assert_eq!(Platform::from_parts(Os::Macos, Arch::X86, Bit::Bit64).unwrap().token(), "osx-x64");
-        assert_eq!(Platform::from_parts(Os::Linux, Arch::Arm, Bit::Bit64).unwrap().token(), "linux-arm64");
-        assert_eq!(Platform::from_parts(Os::Linux, Arch::Arm, Bit::Bit32).unwrap().token(), "linux-arm32");
-        assert_eq!(Platform::from_parts(Os::Linux, Arch::X86, Bit::Bit64).unwrap().token(), "linux-x64");
+        assert_eq!(
+            Platform::from_parts(Os::Macos, Arch::Arm, Bit::Bit64)
+                .unwrap()
+                .token(),
+            "osx-arm64"
+        );
+        assert_eq!(
+            Platform::from_parts(Os::Macos, Arch::X86, Bit::Bit64)
+                .unwrap()
+                .token(),
+            "osx-x64"
+        );
+        assert_eq!(
+            Platform::from_parts(Os::Linux, Arch::Arm, Bit::Bit64)
+                .unwrap()
+                .token(),
+            "linux-arm64"
+        );
+        assert_eq!(
+            Platform::from_parts(Os::Linux, Arch::Arm, Bit::Bit32)
+                .unwrap()
+                .token(),
+            "linux-arm32"
+        );
+        assert_eq!(
+            Platform::from_parts(Os::Linux, Arch::X86, Bit::Bit64)
+                .unwrap()
+                .token(),
+            "linux-x64"
+        );
     }
 
     #[test]
@@ -146,17 +180,35 @@ mod tests {
     #[test]
     fn asset_filename_matches_github_naming() {
         let p = Platform::from_parts(Os::Macos, Arch::Arm, Bit::Bit64).unwrap();
-        assert_eq!(p.asset_filename("7.6.4"), "powershell-7.6.4-osx-arm64.tar.gz");
+        assert_eq!(
+            p.asset_filename("7.6.4"),
+            "powershell-7.6.4-osx-arm64.tar.gz"
+        );
         let p = Platform::from_parts(Os::Linux, Arch::Arm, Bit::Bit32).unwrap();
-        assert_eq!(p.asset_filename("7.6.4"), "powershell-7.6.4-linux-arm32.tar.gz");
+        assert_eq!(
+            p.asset_filename("7.6.4"),
+            "powershell-7.6.4-linux-arm32.tar.gz"
+        );
     }
 
     #[test]
     fn available_bits_reflects_real_assets() {
-        assert_eq!(Platform::available_bits(Os::Linux, Arch::Arm), vec![Bit::Bit64, Bit::Bit32]);
-        assert_eq!(Platform::available_bits(Os::Linux, Arch::X86), vec![Bit::Bit64]);
-        assert_eq!(Platform::available_bits(Os::Macos, Arch::Arm), vec![Bit::Bit64]);
-        assert_eq!(Platform::available_bits(Os::Macos, Arch::X86), vec![Bit::Bit64]);
+        assert_eq!(
+            Platform::available_bits(Os::Linux, Arch::Arm),
+            vec![Bit::Bit64, Bit::Bit32]
+        );
+        assert_eq!(
+            Platform::available_bits(Os::Linux, Arch::X86),
+            vec![Bit::Bit64]
+        );
+        assert_eq!(
+            Platform::available_bits(Os::Macos, Arch::Arm),
+            vec![Bit::Bit64]
+        );
+        assert_eq!(
+            Platform::available_bits(Os::Macos, Arch::X86),
+            vec![Bit::Bit64]
+        );
     }
 
     #[test]

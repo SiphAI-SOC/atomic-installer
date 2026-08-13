@@ -8,7 +8,9 @@ fn read_input(prompt: &str) -> Result<String, anyhow::Error> {
     print!("{prompt}");
     io::stdout().flush().context("failed to flush stdout")?;
     let mut line = String::new();
-    let n = io::stdin().read_line(&mut line).context("failed to read stdin")?;
+    let n = io::stdin()
+        .read_line(&mut line)
+        .context("failed to read stdin")?;
     if n == 0 {
         anyhow::bail!("stdin closed; aborting");
     }
@@ -22,10 +24,11 @@ fn ask_choice(question: &str, options: &[(&str, &str)]) -> Result<usize, anyhow:
     }
     loop {
         let input = read_input(&format!("Enter choice [1-{}]: ", options.len()))?;
-        if let Ok(n) = input.parse::<usize>() {
-            if n >= 1 && n <= options.len() {
-                return Ok(n - 1);
-            }
+        if let Ok(n) = input.parse::<usize>()
+            && n >= 1
+            && n <= options.len()
+        {
+            return Ok(n - 1);
         }
         eprintln!(
             "[WARN] invalid choice '{input}'; enter a number from 1 to {}",

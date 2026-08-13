@@ -19,8 +19,8 @@ pub fn clear_dir_contents(path: &Path) -> Result<(), anyhow::Error> {
     if !path.exists() {
         return Ok(());
     }
-    for entry in std::fs::read_dir(path)
-        .with_context(|| format!("failed to read {}", path.display()))?
+    for entry in
+        std::fs::read_dir(path).with_context(|| format!("failed to read {}", path.display()))?
     {
         let entry = entry.context("failed to read a directory entry")?;
         let p = entry.path();

@@ -24,15 +24,24 @@ pub fn parse(args: &[String]) -> Result<CliOutcome, String> {
             "--skip-atomic" => out.skip_atomic = true,
             "--os" => {
                 let v = it.next().ok_or("--os requires a value (macos|linux)")?;
-                out.os = Some(Os::parse(v).ok_or_else(|| format!("invalid --os value '{v}' (expected macos|linux)"))?);
+                out.os =
+                    Some(Os::parse(v).ok_or_else(|| {
+                        format!("invalid --os value '{v}' (expected macos|linux)")
+                    })?);
             }
             "--arch" => {
                 let v = it.next().ok_or("--arch requires a value (arm|x86)")?;
-                out.arch = Some(Arch::parse(v).ok_or_else(|| format!("invalid --arch value '{v}' (expected arm|x86)"))?);
+                out.arch = Some(
+                    Arch::parse(v)
+                        .ok_or_else(|| format!("invalid --arch value '{v}' (expected arm|x86)"))?,
+                );
             }
             "--bit" => {
                 let v = it.next().ok_or("--bit requires a value (32|64)")?;
-                out.bit = Some(Bit::parse(v).ok_or_else(|| format!("invalid --bit value '{v}' (expected 32|64)"))?);
+                out.bit = Some(
+                    Bit::parse(v)
+                        .ok_or_else(|| format!("invalid --bit value '{v}' (expected 32|64)"))?,
+                );
             }
             other => return Err(format!("unknown argument '{other}'")),
         }
@@ -65,8 +74,15 @@ mod tests {
     #[test]
     fn parses_all_flags() {
         let args = vec![
-            s("prog"), s("--os"), s("linux"), s("--arch"), s("arm"),
-            s("--bit"), s("32"), s("--force"), s("--skip-atomic"),
+            s("prog"),
+            s("--os"),
+            s("linux"),
+            s("--arch"),
+            s("arm"),
+            s("--bit"),
+            s("32"),
+            s("--force"),
+            s("--skip-atomic"),
         ];
         match parse(&args) {
             Ok(CliOutcome::Run(a)) => {
@@ -97,7 +113,10 @@ mod tests {
 
     #[test]
     fn help_returns_help_outcome() {
-        assert!(matches!(parse(&vec![s("prog"), s("--help")]), Ok(CliOutcome::Help)));
+        assert!(matches!(
+            parse(&vec![s("prog"), s("--help")]),
+            Ok(CliOutcome::Help)
+        ));
     }
 
     #[test]
