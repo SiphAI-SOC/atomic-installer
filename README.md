@@ -32,6 +32,14 @@ The install is fully user-local under `~/.local`.
 - `~/.local/bin` on `PATH` if you want to call `pwsh` by name.
 - PowerShell is **not** required beforehand; the tool installs it.
 
+## Build
+
+```sh
+cargo build --release -j 10 # Build from current OS arch 
+cargo build --release -j 10 --target aarch64-unknown-linux-gnu # Build for specific OS arch
+
+```
+
 ## Install
 
 ```sh
