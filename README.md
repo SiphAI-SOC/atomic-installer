@@ -42,10 +42,82 @@ cargo build --release -j 10 --target aarch64-unknown-linux-gnu # Build for speci
 
 ## Install
 
+### Option A: `cargo install` from the git remote (recommended)
+
+`cargo install` builds a release binary from source and places it in
+`~/.cargo/bin` (a directory already managed by Cargo and typically on your
+`PATH`), so there is no need to manually copy the binary or keep the source
+tree around.
+
+```sh
+cargo install --git https://github.com/SiphAI-SOC/atomic-installer.git
+```
+
+That fetches the latest `main` and builds the `atomic-installer` binary. To pin
+a specific version or commit instead of tracking the default branch:
+
+```sh
+# Pin a published version
+cargo install atomic-installer --version 0.1.0
+
+# Pin an exact commit (sha or tag) from the git remote
+cargo install --git https://github.com/SiphAI-SOC/atomic-installer.git --rev <commit-sha>
+cargo install --git https://github.com/SiphAI-SOC/atomic-installer.git --tag <tag-name>
+```
+
+Notes:
+
+- The crate is **not** currently published on `crates.io`, so plain
+  `cargo install atomic-installer` fails with a "could not find crate" error.
+  Until it is published, use the `--git` form above (the `--version` example
+  only works after publishing).
+- The binary lands at `~/.cargo/bin/atomic-installer`. Make sure
+  `~/.cargo/bin` is on your `PATH`; otherwise call it by full path.
+- Cargo compiles with the Rust toolchain currently active in your shell. See
+  [Requirements](#requirements) for the minimum version.
+
+### Option B: `cargo install` from a local checkout
+
+If you already have the repository cloned, install from the local path (fast
+for iteration, and works fully offline once dependencies are cached):
+
+```sh
+git clone https://github.com/SiphAI-SOC/atomic-installer.git
+cd atomic-installer
+cargo install --path .
+```
+
+Use `--force` to rebuild and replace an existing `atomic-installer` binary:
+
+```sh
+cargo install --path . --force
+```
+
+### Option C: manual copy of a release build
+
+Build yourself and copy the binary wherever you like (here, `~/.local/bin`,
+which is the same directory the tool itself manages for `pwsh`):
+
 ```sh
 cargo build --release
 install -m 0755 target/release/atomic-installer ~/.local/bin/
 ```
+
+Then ensure `~/.local/bin` is on your `PATH`.
+
+### Uninstalling
+
+```sh
+# Remove the cargo-managed binary (Options A and B)
+cargo uninstall atomic-installer
+
+# Or simply delete the binary if you placed it manually (Option C)
+rm ~/.local/bin/atomic-installer
+```
+
+Uninstalling `atomic-installer` does **not** remove the PowerShell install,
+the `pwsh` symlink, or Atomic Red Team from your system — those live under
+`~/.local` and are left untouched.
 
 ## Usage
 
