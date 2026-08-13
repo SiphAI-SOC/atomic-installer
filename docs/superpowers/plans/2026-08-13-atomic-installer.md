@@ -106,9 +106,9 @@ If the user wants version control: `git init && git add -A && git commit -m "cho
 **Interfaces:**
 - Consumes: nothing (pure module).
 - Produces:
-  - `pub enum Os { Macos, Linux }` with `pub fn parse(s: &str) -> Option<Os>`, `pub fn label(&self) -> &'static str`, `pub fn token(&self) -> &'static str`
-  - `pub enum Arch { Arm, X86 }` with `parse`, `label`, `token`
-  - `pub enum Bit { Bit32, Bit64 }` with `parse`, `label`, `token`
+  - `pub enum Os { Macos, Linux }` with `pub fn parse(s: &str) -> Option<Os>`, `pub fn label(&self) -> &'static str`
+  - `pub enum Arch { Arm, X86 }` with `parse`, `label`
+  - `pub enum Bit { Bit32, Bit64 }` with `parse`, `label`
   - `pub struct Platform { pub os: Os, pub arch: Arch, pub bit: Bit }`
   - `impl Platform`: `pub fn available_bits(os: Os, arch: Arch) -> Vec<Bit>`, `pub fn from_parts(os: Os, arch: Arch, bit: Bit) -> Result<Platform, String>`, `pub fn token(&self) -> String`, `pub fn asset_filename(&self, version: &str) -> String`, `pub fn describe(&self) -> String`
   - All three enums derive `Debug, Clone, Copy, PartialEq, Eq`; `Platform` derives `Debug, Clone, Copy, PartialEq, Eq`.
@@ -194,13 +194,6 @@ impl Os {
             Os::Linux => "Linux",
         }
     }
-
-    pub fn token(&self) -> &'static str {
-        match self {
-            Os::Macos => "osx",
-            Os::Linux => "linux",
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -224,13 +217,6 @@ impl Arch {
             Arch::X86 => "x86",
         }
     }
-
-    pub fn token(&self) -> &'static str {
-        match self {
-            Arch::Arm => "arm",
-            Arch::X86 => "x",
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -252,13 +238,6 @@ impl Bit {
         match self {
             Bit::Bit32 => "32-bit",
             Bit::Bit64 => "64-bit",
-        }
-    }
-
-    pub fn token(&self) -> &'static str {
-        match self {
-            Bit::Bit32 => "32",
-            Bit::Bit64 => "64",
         }
     }
 }
@@ -371,7 +350,7 @@ mod tests {
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `cargo test pattern::tests -v`
-Expected: PASS (all 6 tests).
+Expected: PASS (all 5 tests).
 
 - [ ] **Step 5: Commit**
 
@@ -730,7 +709,7 @@ git commit -m "feat: interactive OS/arch/bit prompts"
 **Interfaces:**
 - Consumes: nothing external (network at runtime; tests are offline).
 - Produces:
-  - `#[derive(Debug, Clone)] pub struct Asset { pub name: String, pub url: String }`
+  - `#[derive(Debug, Clone, PartialEq)] pub struct Asset { pub name: String, pub url: String }`
   - `#[derive(Debug, Clone)] pub struct Release { pub tag: String, pub version: String, pub assets: Vec<Asset> }`
   - `pub fn fetch_latest_release() -> Result<Release, anyhow::Error>`
   - `pub fn parse_release_json(body: &str) -> Result<Release, anyhow::Error>`
@@ -816,7 +795,7 @@ struct ApiAsset {
     browser_download_url: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Asset {
     pub name: String,
     pub url: String,
