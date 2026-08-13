@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1"
+crossterm = "0.29"
 flate2 = "1"
 hex = "0.4"
 serde = { version = "1", features = ["derive"] }
