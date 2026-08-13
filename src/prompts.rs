@@ -213,25 +213,35 @@ fn select(
 }
 
 fn prompt_os() -> Result<Os, anyhow::Error> {
+    let detected = Os::detect();
+    if let Some(os) = detected {
+        println!("[INFO] detected host OS: {}", os.label());
+    }
+    let default = detected.map(|os| if os == Os::Macos { 0 } else { 1 });
     let idx = select(
         "Select the operating system:",
         &[
             ("macOS", "Apple Silicon or Intel Mac"),
             ("Linux", "Debian/Ubuntu/RHEL-family distro"),
         ],
-        None,
+        default,
     )?;
     Ok(if idx == 0 { Os::Macos } else { Os::Linux })
 }
 
 fn prompt_arch() -> Result<Arch, anyhow::Error> {
+    let detected = Arch::detect();
+    if let Some(arch) = detected {
+        println!("[INFO] detected host architecture: {}", arch.label());
+    }
+    let default = detected.map(|arch| if arch == Arch::Arm { 0 } else { 1 });
     let idx = select(
         "Select the CPU architecture:",
         &[
             ("ARM", "Apple Silicon / AArch64"),
             ("x86", "Intel / AMD 64-bit"),
         ],
-        None,
+        default,
     )?;
     Ok(if idx == 0 { Arch::Arm } else { Arch::X86 })
 }
@@ -248,13 +258,19 @@ fn prompt_bit(os: Os, arch: Arch) -> Result<Bit, anyhow::Error> {
         );
         return Ok(bit);
     }
+    let is_64 = std::mem::size_of::<usize>() == 8;
+    println!(
+        "[INFO] detected host bitness: {}",
+        if is_64 { "64-bit" } else { "32-bit" }
+    );
+    let default = if is_64 { Some(0) } else { Some(1) };
     let idx = select(
         "Select the bit type:",
         &[
             ("64-bit", "Recommended"),
             ("32-bit", "Legacy or limited hardware only"),
         ],
-        None,
+        default,
     )?;
     Ok(if idx == 0 { Bit::Bit64 } else { Bit::Bit32 })
 }

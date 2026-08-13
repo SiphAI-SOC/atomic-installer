@@ -57,7 +57,7 @@ pub fn usage() -> String {
          \n\
          USAGE:\n    atomic-installer [OPTIONS]\n\
          \n\
-         OPTIONS:\n    --os <macos|linux>      Operating system (default: prompt)\n    --arch <arm|x86>        CPU architecture (default: prompt)\n    --bit <32|64>           Bit type (default: prompt or auto)\n    --force                 Reinstall pwsh even if already working\n    --skip-atomic           Stop after pwsh is verified; skip Atomic Red Team\n    -h, --help              Print this help text\n",
+         OPTIONS:\n    --os <macos|linux>      Operating system (default: detect or prompt)\n    --arch <arm|x86>        CPU architecture (default: detect or prompt)\n    --bit <32|64>           Bit type (default: detect or prompt)\n    --force                 Reinstall pwsh even if already working\n    --skip-atomic           Stop after pwsh is verified; skip Atomic Red Team\n    -h, --help              Print this help text\n",
         env!("CARGO_PKG_VERSION")
     )
 }

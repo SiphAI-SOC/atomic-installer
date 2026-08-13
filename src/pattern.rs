@@ -21,7 +21,6 @@ impl Os {
     }
 
     /// The host OS from `std::env::consts`, if supported.
-    #[allow(dead_code)]
     pub fn detect() -> Option<Os> {
         Os::parse(std::env::consts::OS)
     }
@@ -50,7 +49,6 @@ impl Arch {
     }
 
     /// The host CPU architecture from `std::env::consts`, if supported.
-    #[allow(dead_code)]
     pub fn detect() -> Option<Arch> {
         Arch::parse(std::env::consts::ARCH)
     }
