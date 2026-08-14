@@ -56,7 +56,7 @@ fn real_main() -> Result<(), anyhow::Error> {
     let pwsh_link = bin_dir.join("pwsh");
     let pwsh_binary = install_dir.join("pwsh");
 
-    let platform = prompts::resolve_platform(&args)?;
+    let platform = prompts::resolve_platform(&args, args.auto)?;
     println!();
     println!("[INFO] selected platform: {}", platform.describe());
     println!(

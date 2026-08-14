@@ -5,6 +5,7 @@ pub struct Args {
     pub os: Option<Os>,
     pub arch: Option<Arch>,
     pub bit: Option<Bit>,
+    pub auto: bool,
     pub force: bool,
     pub skip_atomic: bool,
 }
@@ -20,6 +21,7 @@ pub fn parse(args: &[String]) -> Result<CliOutcome, String> {
     while let Some(arg) = it.next() {
         match arg.as_str() {
             "--help" | "-h" => return Ok(CliOutcome::Help),
+            "--auto" | "-a" => out.auto = true,
             "--force" => out.force = true,
             "--skip-atomic" => out.skip_atomic = true,
             "--os" => {
@@ -57,7 +59,7 @@ pub fn usage() -> String {
          \n\
          USAGE:\n    atomic-installer [OPTIONS]\n\
          \n\
-         OPTIONS:\n    --os <macos|linux>      Operating system (default: detect or prompt)\n    --arch <arm|x86>        CPU architecture (default: detect or prompt)\n    --bit <32|64>           Bit type (default: detect or prompt)\n    --force                 Reinstall pwsh even if already working\n    --skip-atomic           Stop after pwsh is verified; skip Atomic Red Team\n    -h, --help              Print this help text\n",
+         OPTIONS:\n    --os <macos|linux>      Operating system (default: detect or prompt)\n    --arch <arm|x86>        CPU architecture (default: detect or prompt)\n    --bit <32|64>           Bit type (default: detect or prompt)\n    -a, --auto              Auto-select platform from host detection (falls back to prompts if undetectable)\n    --force                 Reinstall pwsh even if already working\n    --skip-atomic           Stop after pwsh is verified; skip Atomic Red Team\n    -h, --help              Print this help text\n",
         env!("CARGO_PKG_VERSION")
     )
 }
@@ -104,11 +106,37 @@ mod tests {
                 assert!(a.os.is_none());
                 assert!(a.arch.is_none());
                 assert!(a.bit.is_none());
+                assert!(!a.auto);
                 assert!(!a.force);
                 assert!(!a.skip_atomic);
             }
             _ => panic!("expected Run"),
         }
+    }
+
+    #[test]
+    fn parses_auto_flag() {
+        let args = vec![s("prog"), s("--auto")];
+        match parse(&args) {
+            Ok(CliOutcome::Run(a)) => assert!(a.auto),
+            _ => panic!("expected Run"),
+        }
+    }
+
+    #[test]
+    fn parses_short_auto_flag() {
+        let args = vec![s("prog"), s("-a")];
+        match parse(&args) {
+            Ok(CliOutcome::Run(a)) => assert!(a.auto),
+            _ => panic!("expected Run"),
+        }
+    }
+
+    #[test]
+    fn usage_lists_auto_flag() {
+        let usage = usage();
+        assert!(usage.contains("--auto"));
+        assert!(usage.contains("-a,"));
     }
 
     #[test]

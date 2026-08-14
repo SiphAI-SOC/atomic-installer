@@ -278,17 +278,39 @@ fn prompt_bit(os: Os, arch: Arch) -> Result<Bit, anyhow::Error> {
     Ok(if idx == 0 { Bit::Bit64 } else { Bit::Bit32 })
 }
 
-pub fn resolve_platform(args: &Args) -> Result<Platform, anyhow::Error> {
+pub fn resolve_platform(args: &Args, auto: bool) -> Result<Platform, anyhow::Error> {
     let os = match args.os {
         Some(o) => o,
+        None if auto => match Os::detect() {
+            Some(o) => {
+                println!("[INFO] auto: using detected host OS: {}", o.label());
+                o
+            }
+            None => prompt_os()?,
+        },
         None => prompt_os()?,
     };
     let arch = match args.arch {
         Some(a) => a,
+        None if auto => match Arch::detect() {
+            Some(a) => {
+                println!(
+                    "[INFO] auto: using detected host architecture: {}",
+                    a.label()
+                );
+                a
+            }
+            None => prompt_arch()?,
+        },
         None => prompt_arch()?,
     };
     let bit = match args.bit {
         Some(b) => b,
+        None if auto => {
+            let b = Platform::auto_bit(os, arch);
+            println!("[INFO] auto: using detected host bitness: {}", b.label());
+            b
+        }
         None => prompt_bit(os, arch)?,
     };
     Platform::from_parts(os, arch, bit).map_err(anyhow::Error::msg)
@@ -361,5 +383,20 @@ mod tests {
         assert_eq!(s.cursor, 1);
         assert_eq!(apply(&mut s, MenuAction::Confirm), MenuOutcome::Confirm);
         assert_eq!(apply(&mut s, MenuAction::Abort), MenuOutcome::Abort);
+    }
+
+    #[test]
+    fn resolve_platform_explicit_flags_win_over_auto() {
+        let args = Args {
+            os: Some(Os::Linux),
+            arch: Some(Arch::Arm),
+            bit: Some(Bit::Bit32),
+            auto: true,
+            ..Default::default()
+        };
+        let p = resolve_platform(&args, true).unwrap();
+        assert_eq!(p.os, Os::Linux);
+        assert_eq!(p.arch, Arch::Arm);
+        assert_eq!(p.bit, Bit::Bit32);
     }
 }

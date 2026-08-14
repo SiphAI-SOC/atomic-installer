@@ -116,6 +116,22 @@ impl Platform {
         }
     }
 
+    /// The bit type `--auto` selects given the host pointer width. A single
+    /// available bit always wins; otherwise the pointer width decides, falling
+    /// back to 64-bit where 32-bit is not an available asset.
+    pub fn bit_for_pointer_width(os: Os, arch: Arch, is_64: bool) -> Bit {
+        let bits = Self::available_bits(os, arch);
+        if bits.len() == 1 {
+            return bits[0];
+        }
+        if is_64 { Bit::Bit64 } else { Bit::Bit32 }
+    }
+
+    /// The bit type `--auto` selects on the current host.
+    pub fn auto_bit(os: Os, arch: Arch) -> Bit {
+        Self::bit_for_pointer_width(os, arch, std::mem::size_of::<usize>() == 8)
+    }
+
     /// The release-asset token, e.g. "osx-arm64" or "linux-arm32".
     pub fn token(&self) -> String {
         match (self.os, self.arch, self.bit) {
@@ -252,5 +268,45 @@ mod tests {
         assert_eq!(Os::parse("freebsd"), None);
         assert_eq!(Arch::parse("riscv64"), None);
         assert_eq!(Arch::parse("powerpc64"), None);
+    }
+
+    #[test]
+    fn bit_for_pointer_width_single_option_wins() {
+        assert_eq!(
+            Platform::bit_for_pointer_width(Os::Macos, Arch::Arm, false),
+            Bit::Bit64
+        );
+        assert_eq!(
+            Platform::bit_for_pointer_width(Os::Macos, Arch::X86, false),
+            Bit::Bit64
+        );
+        assert_eq!(
+            Platform::bit_for_pointer_width(Os::Linux, Arch::X86, false),
+            Bit::Bit64
+        );
+    }
+
+    #[test]
+    fn bit_for_pointer_width_linux_arm_follows_pointer_width() {
+        assert_eq!(
+            Platform::bit_for_pointer_width(Os::Linux, Arch::Arm, true),
+            Bit::Bit64
+        );
+        assert_eq!(
+            Platform::bit_for_pointer_width(Os::Linux, Arch::Arm, false),
+            Bit::Bit32
+        );
+    }
+
+    #[test]
+    fn auto_bit_matches_host_pointer_width() {
+        for os in [Os::Macos, Os::Linux] {
+            for arch in [Arch::Arm, Arch::X86] {
+                assert_eq!(
+                    Platform::auto_bit(os, arch),
+                    Platform::bit_for_pointer_width(os, arch, std::mem::size_of::<usize>() == 8)
+                );
+            }
+        }
     }
 }
