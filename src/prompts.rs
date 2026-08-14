@@ -21,6 +21,14 @@ fn read_input(prompt: &str) -> Result<String, anyhow::Error> {
     Ok(line.trim().to_string())
 }
 
+pub fn parse_confirmation(input: &str) -> bool {
+    matches!(input.trim().to_ascii_lowercase().as_str(), "y" | "yes")
+}
+
+pub fn confirm(prompt: &str) -> Result<bool, anyhow::Error> {
+    Ok(parse_confirmation(&read_input(prompt)?))
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum MenuOutcome {
     Move,
@@ -398,5 +406,23 @@ mod tests {
         assert_eq!(p.os, Os::Linux);
         assert_eq!(p.arch, Arch::Arm);
         assert_eq!(p.bit, Bit::Bit32);
+    }
+
+    #[test]
+    fn confirmation_accepts_yes_variants() {
+        assert!(parse_confirmation("y"));
+        assert!(parse_confirmation("yes"));
+        assert!(parse_confirmation("Y"));
+        assert!(parse_confirmation("YES"));
+        assert!(parse_confirmation(" Yes "));
+    }
+
+    #[test]
+    fn confirmation_rejects_everything_else() {
+        assert!(!parse_confirmation("n"));
+        assert!(!parse_confirmation("no"));
+        assert!(!parse_confirmation(""));
+        assert!(!parse_confirmation(" "));
+        assert!(!parse_confirmation("maybe"));
     }
 }

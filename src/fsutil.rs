@@ -70,6 +70,48 @@ pub fn create_or_replace_symlink(target: &Path, link: &Path) -> Result<(), anyho
     Ok(())
 }
 
+pub fn remove_if_symlink(path: &Path) -> Result<(), anyhow::Error> {
+    match std::fs::symlink_metadata(path) {
+        Ok(meta) if meta.file_type().is_symlink() => {
+            std::fs::remove_file(path)
+                .with_context(|| format!("failed to remove symlink {}", path.display()))?;
+            println!("[INFO] removed symlink {}", path.display());
+        }
+        Ok(_) => {
+            println!(
+                "[WARN] {} exists and is not a symlink; leaving it alone",
+                path.display()
+            );
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => {
+            return Err(e).with_context(|| format!("failed to inspect {}", path.display()));
+        }
+    }
+    Ok(())
+}
+
+pub fn remove_dir_if_exists(path: &Path) -> Result<(), anyhow::Error> {
+    match std::fs::symlink_metadata(path) {
+        Ok(meta) if meta.is_dir() => {
+            std::fs::remove_dir_all(path)
+                .with_context(|| format!("failed to remove directory {}", path.display()))?;
+            println!("[INFO] removed directory {}", path.display());
+        }
+        Ok(_) => {
+            println!(
+                "[WARN] {} exists and is not a directory; leaving it alone",
+                path.display()
+            );
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => {
+            return Err(e).with_context(|| format!("failed to inspect {}", path.display()));
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -121,5 +163,57 @@ mod tests {
         std::fs::write(&target, b"x").unwrap();
         std::fs::write(&blocker, b"block").unwrap();
         assert!(create_or_replace_symlink(&target, &blocker).is_err());
+    }
+
+    #[test]
+    fn remove_if_symlink_removes_symlink_only() {
+        let dir = tempfile::tempdir().unwrap();
+        let target = dir.path().join("target");
+        std::fs::write(&target, b"x").unwrap();
+        let link = dir.path().join("link");
+        std::os::unix::fs::symlink(&target, &link).unwrap();
+        remove_if_symlink(&link).unwrap();
+        assert!(!link.exists());
+        assert!(target.exists());
+    }
+
+    #[test]
+    fn remove_if_symlink_removes_dangling_symlink() {
+        let dir = tempfile::tempdir().unwrap();
+        let link = dir.path().join("link");
+        std::os::unix::fs::symlink(dir.path().join("gone"), &link).unwrap();
+        remove_if_symlink(&link).unwrap();
+        assert!(!link.exists());
+    }
+
+    #[test]
+    fn remove_if_symlink_warns_on_regular_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let f = dir.path().join("file");
+        std::fs::write(&f, b"x").unwrap();
+        remove_if_symlink(&f).unwrap();
+        assert!(f.exists());
+    }
+
+    #[test]
+    fn remove_if_symlink_noop_when_missing() {
+        let dir = tempfile::tempdir().unwrap();
+        remove_if_symlink(&dir.path().join("missing")).unwrap();
+    }
+
+    #[test]
+    fn remove_dir_if_exists_removes_dir() {
+        let dir = tempfile::tempdir().unwrap();
+        let sub = dir.path().join("a/b");
+        std::fs::create_dir_all(&sub).unwrap();
+        std::fs::write(sub.join("f"), b"x").unwrap();
+        remove_dir_if_exists(&sub).unwrap();
+        assert!(!sub.exists());
+    }
+
+    #[test]
+    fn remove_dir_if_exists_noop_when_missing() {
+        let dir = tempfile::tempdir().unwrap();
+        remove_dir_if_exists(&dir.path().join("missing")).unwrap();
     }
 }

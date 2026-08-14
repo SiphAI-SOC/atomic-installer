@@ -6,6 +6,7 @@ pub struct Args {
     pub arch: Option<Arch>,
     pub bit: Option<Bit>,
     pub auto: bool,
+    pub uninstall: bool,
     pub force: bool,
     pub skip_atomic: bool,
 }
@@ -22,6 +23,7 @@ pub fn parse(args: &[String]) -> Result<CliOutcome, String> {
         match arg.as_str() {
             "--help" | "-h" => return Ok(CliOutcome::Help),
             "--auto" | "-a" => out.auto = true,
+            "--uninstall" | "-u" => out.uninstall = true,
             "--force" => out.force = true,
             "--skip-atomic" => out.skip_atomic = true,
             "--os" => {
@@ -59,7 +61,7 @@ pub fn usage() -> String {
          \n\
          USAGE:\n    atomic-installer [OPTIONS]\n\
          \n\
-         OPTIONS:\n    --os <macos|linux>      Operating system (default: detect or prompt)\n    --arch <arm|x86>        CPU architecture (default: detect or prompt)\n    --bit <32|64>           Bit type (default: detect or prompt)\n    -a, --auto              Auto-select platform from host detection (falls back to prompts if undetectable)\n    --force                 Reinstall pwsh even if already working\n    --skip-atomic           Stop after pwsh is verified; skip Atomic Red Team\n    -h, --help              Print this help text\n",
+         OPTIONS:\n    --os <macos|linux>      Operating system (default: detect or prompt)\n    --arch <arm|x86>        CPU architecture (default: detect or prompt)\n    --bit <32|64>           Bit type (default: detect or prompt)\n    -a, --auto              Auto-select platform from host detection (falls back to prompts if undetectable)\n    -u, --uninstall         Uninstall pwsh and Atomic Red Team instead of installing\n    --force                 Reinstall pwsh even if already working\n    --skip-atomic           Stop after pwsh is verified; skip Atomic Red Team\n    -h, --help              Print this help text\n",
         env!("CARGO_PKG_VERSION")
     )
 }
@@ -107,6 +109,7 @@ mod tests {
                 assert!(a.arch.is_none());
                 assert!(a.bit.is_none());
                 assert!(!a.auto);
+                assert!(!a.uninstall);
                 assert!(!a.force);
                 assert!(!a.skip_atomic);
             }
@@ -133,10 +136,35 @@ mod tests {
     }
 
     #[test]
+    fn parses_uninstall_flag() {
+        let args = vec![s("prog"), s("--uninstall")];
+        match parse(&args) {
+            Ok(CliOutcome::Run(a)) => assert!(a.uninstall),
+            _ => panic!("expected Run"),
+        }
+    }
+
+    #[test]
+    fn parses_short_uninstall_flag() {
+        let args = vec![s("prog"), s("-u")];
+        match parse(&args) {
+            Ok(CliOutcome::Run(a)) => assert!(a.uninstall),
+            _ => panic!("expected Run"),
+        }
+    }
+
+    #[test]
     fn usage_lists_auto_flag() {
         let usage = usage();
         assert!(usage.contains("--auto"));
         assert!(usage.contains("-a,"));
+    }
+
+    #[test]
+    fn usage_lists_uninstall_flag() {
+        let usage = usage();
+        assert!(usage.contains("--uninstall"));
+        assert!(usage.contains("-u,"));
     }
 
     #[test]

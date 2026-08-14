@@ -56,6 +56,10 @@ fn real_main() -> Result<(), anyhow::Error> {
     let pwsh_link = bin_dir.join("pwsh");
     let pwsh_binary = install_dir.join("pwsh");
 
+    if args.uninstall {
+        return uninstall(&install_dir, &pwsh_link);
+    }
+
     let platform = prompts::resolve_platform(&args, args.auto)?;
     println!();
     println!("[INFO] selected platform: {}", platform.describe());
@@ -111,6 +115,39 @@ fn pwsh_works(pwsh_link: &Path) -> Result<bool, anyhow::Error> {
         );
     }
     Ok(ok)
+}
+
+fn uninstall(install_dir: &Path, pwsh_link: &Path) -> Result<(), anyhow::Error> {
+    uninstall_with_ask(install_dir, pwsh_link, prompts::confirm)
+}
+
+fn uninstall_with_ask(
+    install_dir: &Path,
+    pwsh_link: &Path,
+    ask: impl Fn(&str) -> Result<bool, anyhow::Error>,
+) -> Result<(), anyhow::Error> {
+    if !path_any_exists(install_dir) && !path_any_exists(pwsh_link) {
+        println!("[WARN] nothing to uninstall");
+        return Ok(());
+    }
+
+    println!("[INFO] this will remove:");
+    println!("  {}", install_dir.display());
+    println!("  {}", pwsh_link.display());
+    if !ask("Remove these files and directories? [y/N]: ")? {
+        anyhow::bail!("uninstall aborted");
+    }
+
+    fsutil::remove_if_symlink(pwsh_link)?;
+    fsutil::remove_dir_if_exists(install_dir)?;
+
+    println!("[INFO] uninstalled PowerShell and Atomic Red Team");
+    Ok(())
+}
+
+/// True when the path exists, including as a dangling symlink.
+fn path_any_exists(path: &Path) -> bool {
+    std::fs::symlink_metadata(path).is_ok()
 }
 
 fn install_powershell(
@@ -209,4 +246,50 @@ fn install_powershell(
         String::from_utf8_lossy(&out.stdout).trim()
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn uninstall_nothing_installed_asks_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let install_dir = dir.path().join("share/powershell");
+        let pwsh_link = dir.path().join("bin/pwsh");
+        let asked = std::cell::Cell::new(false);
+        uninstall_with_ask(&install_dir, &pwsh_link, |_| {
+            asked.set(true);
+            Ok(true)
+        })
+        .unwrap();
+        assert!(!asked.get());
+    }
+
+    #[test]
+    fn uninstall_declined_aborts_without_removing() {
+        let dir = tempfile::tempdir().unwrap();
+        let install_dir = dir.path().join("share/powershell");
+        let pwsh_link = dir.path().join("bin/pwsh");
+        std::fs::create_dir_all(&install_dir).unwrap();
+        std::fs::create_dir_all(pwsh_link.parent().unwrap()).unwrap();
+        std::os::unix::fs::symlink(install_dir.join("pwsh"), &pwsh_link).unwrap();
+        assert!(uninstall_with_ask(&install_dir, &pwsh_link, |_| Ok(false)).is_err());
+        assert!(install_dir.exists());
+        assert!(std::fs::symlink_metadata(&pwsh_link).is_ok());
+    }
+
+    #[test]
+    fn uninstall_removes_symlink_and_install_dir() {
+        let dir = tempfile::tempdir().unwrap();
+        let install_dir = dir.path().join("share/powershell");
+        let pwsh_link = dir.path().join("bin/pwsh");
+        std::fs::create_dir_all(&install_dir).unwrap();
+        std::fs::create_dir_all(pwsh_link.parent().unwrap()).unwrap();
+        std::fs::write(install_dir.join("pwsh"), b"binary").unwrap();
+        std::os::unix::fs::symlink(install_dir.join("pwsh"), &pwsh_link).unwrap();
+        uninstall_with_ask(&install_dir, &pwsh_link, |_| Ok(true)).unwrap();
+        assert!(!install_dir.exists());
+        assert!(std::fs::symlink_metadata(&pwsh_link).is_err());
+    }
 }
