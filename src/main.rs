@@ -84,15 +84,28 @@ fn real_main() -> Result<(), anyhow::Error> {
     if args.skip_atomic {
         println!("[INFO] --skip-atomic given; not installing Atomic Red Team");
     } else {
-        atomic::run_atomic_install(&pwsh_link)?;
+        atomic::run_atomic_install(&pwsh_link, !args.no_atomics_repo)?;
     }
 
     println!();
     println!("=== summary ===");
     println!("[INFO] PowerShell binary: {}", pwsh_binary.display());
     println!("[INFO] pwsh link: {}", pwsh_link.display());
-    println!("[INFO] Atomic Red Team: run 'Invoke-AtomicTest <technique-id>' from pwsh to use it");
+    println!(
+        "[INFO] {}",
+        atomic_summary_line(args.skip_atomic, args.no_atomics_repo)
+    );
     Ok(())
+}
+
+fn atomic_summary_line(skip: bool, no_atomics_repo: bool) -> String {
+    if skip {
+        "Atomic Red Team: skipped (--skip-atomic)".to_string()
+    } else if no_atomics_repo {
+        "Atomic Red Team module installed without the atomics repository; run 'Invoke-AtomicRedTeam -getAtomics' from pwsh to download it later".to_string()
+    } else {
+        "Atomic Red Team: run 'Invoke-AtomicTest <technique-id>' from pwsh to use it".to_string()
+    }
 }
 
 /// Returns true if the link exists and runs a version command successfully.
@@ -251,6 +264,24 @@ fn install_powershell(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn atomic_summary_default_points_to_invoke_atomic_test() {
+        assert!(atomic_summary_line(false, false).contains("Invoke-AtomicTest"));
+    }
+
+    #[test]
+    fn atomic_summary_no_atomics_repo_offers_recovery() {
+        let line = atomic_summary_line(false, true);
+        assert!(line.contains("without the atomics repository"));
+        assert!(line.contains("-getAtomics"));
+    }
+
+    #[test]
+    fn atomic_summary_skipped_reports_skip() {
+        assert!(atomic_summary_line(true, false).contains("--skip-atomic"));
+        assert!(atomic_summary_line(true, true).contains("--skip-atomic"));
+    }
 
     #[test]
     fn uninstall_nothing_installed_asks_nothing() {
