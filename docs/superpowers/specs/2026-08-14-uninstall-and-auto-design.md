@@ -66,8 +66,8 @@ branch testable on a 64-bit development machine.
    `[WARN] nothing to uninstall`, return success (exit 0).
 2. Print `[INFO] this will remove:` followed by both paths, then prompt
    `Remove these files and directories? [y/N]`. A decline (including empty input)
-   prints `[WARN] uninstall aborted` and returns a runtime error (exit 1),
-   consistent with the existing "aborted by user" behavior.
+   is reported as `[ERROR] uninstall aborted` and returns a runtime error
+   (exit 1), consistent with the existing "aborted by user" behavior.
 3. Remove `pwsh_link` if it is a symlink. If it exists but is not a symlink,
    print `[WARN] <path> exists and is not a symlink; leaving it alone`.
 4. Remove `install_dir` if it exists. This also removes the Atomic Red Team
