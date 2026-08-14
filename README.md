@@ -133,6 +133,8 @@ non-interactive use:
 | `--os` | `macos` or `linux` | Operating system (aliases accepted: `mac`, `darwin`, `osx`) |
 | `--arch` | `arm` or `x86` | CPU architecture (aliases: `aarch64`, `arm64`, `x64`, `amd64`, `intel`) |
 | `--bit` | `32` or `64` | Bit type (aliases: `32-bit`, `64bit`, `i386`, `i686`, ...) |
+| `-a`, `--auto` | | Auto-select the platform from host detection; falls back to prompts if an axis cannot be detected |
+| `-u`, `--uninstall` | | Uninstall pwsh and Atomic Red Team instead of installing |
 | `--force` | | Reinstall pwsh even if an existing install passes the version check |
 | `--skip-atomic` | | Stop after pwsh is verified; do not run the Atomic Red Team installer |
 | `-h`, `--help` | | Print help and exit |
@@ -155,6 +157,12 @@ atomic-installer --os linux --arch x86 --bit 64
 
 # Reinstall pwsh even if it already works
 atomic-installer --os macos --arch arm --bit 64 --force
+
+# Auto-select the platform from the host (falls back to prompts if undetectable)
+atomic-installer --auto
+
+# Uninstall pwsh and Atomic Red Team (asks for confirmation)
+atomic-installer --uninstall
 ```
 
 ### Supported platforms
