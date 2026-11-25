@@ -56,6 +56,10 @@ fn real_main() -> Result<(), anyhow::Error> {
     let pwsh_link = bin_dir.join("pwsh");
     let pwsh_binary = install_dir.join("pwsh");
 
+    if args.check {
+        return check_install(&install_dir, &pwsh_link);
+    }
+
     if args.uninstall {
         return uninstall(&install_dir, &pwsh_link);
     }
@@ -152,6 +156,38 @@ fn pwsh_works(pwsh_link: &Path) -> Result<bool, anyhow::Error> {
 
 fn uninstall(install_dir: &Path, pwsh_link: &Path) -> Result<(), anyhow::Error> {
     uninstall_with_ask(install_dir, pwsh_link, prompts::confirm)
+}
+
+fn check_install(install_dir: &Path, pwsh_link: &Path) -> Result<(), anyhow::Error> {
+    let mut ok = true;
+    if install_dir.exists() {
+        println!("[INFO] install dir present: {}", install_dir.display());
+    } else {
+        println!("[WARN] install dir missing: {}", install_dir.display());
+        ok = false;
+    }
+    if pwsh_link.exists() {
+        match std::process::Command::new(pwsh_link).arg("-v").output() {
+            Ok(o) if o.status.success() && !o.stdout.is_empty() => {
+                println!(
+                    "[INFO] pwsh OK: {}",
+                    String::from_utf8_lossy(&o.stdout).trim()
+                );
+            }
+            _ => {
+                println!("[WARN] pwsh link present but version check failed");
+                ok = false;
+            }
+        }
+    } else {
+        println!("[WARN] pwsh link missing: {}", pwsh_link.display());
+        ok = false;
+    }
+    if ok {
+        Ok(())
+    } else {
+        anyhow::bail!("installation check failed")
+    }
 }
 
 fn uninstall_with_ask(
