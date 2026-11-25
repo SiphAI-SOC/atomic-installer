@@ -90,6 +90,29 @@ pub fn verify_checksum(file: &Path, expected_hex: &str) -> Result<(), anyhow::Er
 }
 
 pub fn extract_tar_gz(archive: &Path, dest: &Path) -> Result<(), anyhow::Error> {
+    // Reject path-traversal entries before extracting anything.
+    let file =
+        File::open(archive).with_context(|| format!("failed to open {}", archive.display()))?;
+    let gz = flate2::read::GzDecoder::new(file);
+    let mut tar = tar::Archive::new(gz);
+    for entry in tar
+        .entries()
+        .with_context(|| format!("failed to read {}", archive.display()))?
+    {
+        let entry = entry.context("failed to read an archive entry")?;
+        let path = entry
+            .path()
+            .with_context(|| "failed to read an archive entry path")?;
+        if path.is_absolute()
+            || path
+                .components()
+                .any(|c| matches!(c, std::path::Component::ParentDir))
+        {
+            anyhow::bail!("unsafe path in archive: {}", path.display());
+        }
+    }
+    drop(tar);
+
     let file =
         File::open(archive).with_context(|| format!("failed to open {}", archive.display()))?;
     let gz = flate2::read::GzDecoder::new(file);

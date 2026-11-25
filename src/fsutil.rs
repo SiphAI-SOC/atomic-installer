@@ -24,7 +24,10 @@ pub fn clear_dir_contents(path: &Path) -> Result<(), anyhow::Error> {
     {
         let entry = entry.context("failed to read a directory entry")?;
         let p = entry.path();
-        if p.is_dir() {
+        let ft = entry
+            .file_type()
+            .context("failed to read a directory entry type")?;
+        if ft.is_dir() {
             std::fs::remove_dir_all(&p)
                 .with_context(|| format!("failed to remove {}", p.display()))?;
         } else {

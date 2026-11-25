@@ -67,6 +67,7 @@ pub fn find_asset<'a>(assets: &'a [Asset], filename: &str) -> Option<&'a Asset> 
 /// Returns a map of filename -> sha256 hex.
 pub fn parse_hashes(bytes: &[u8]) -> Result<HashMap<String, String>, anyhow::Error> {
     let text = decode_text(bytes).context("hashes.sha256 is neither valid UTF-8 nor UTF-16")?;
+    let text = text.trim_start_matches('\u{FEFF}');
     let mut map = HashMap::new();
     for line in text.lines() {
         let line = line.trim();
