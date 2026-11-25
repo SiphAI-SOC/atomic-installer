@@ -102,6 +102,7 @@ fn real_main() -> Result<(), anyhow::Error> {
             args.force,
             args.version.as_deref(),
             args.keep_archive,
+            args.retries,
         )?;
     }
 
@@ -229,6 +230,7 @@ fn install_powershell(
     force: bool,
     version: Option<&str>,
     keep_archive: bool,
+    retries: u32,
 ) -> Result<(), anyhow::Error> {
     println!("[INFO] fetching the PowerShell release from GitHub");
     let release = github::fetch_release(version)?;
@@ -261,10 +263,10 @@ fn install_powershell(
 
     let result = (|| -> Result<(), anyhow::Error> {
         println!("[INFO] downloading {} ({})", asset.name, asset.url);
-        download::download_to_file(&asset.url, &tmp, &asset.name)?;
+        download::download_to_file(&asset.url, &tmp, &asset.name, retries)?;
 
         println!("[INFO] downloading checksums (hashes.sha256)");
-        let hash_bytes = download::download_bytes(&hash_asset.url, "hashes.sha256")?;
+        let hash_bytes = download::download_bytes(&hash_asset.url, "hashes.sha256", retries)?;
         let hashes = github::parse_hashes(&hash_bytes).context("failed to parse hashes.sha256")?;
         let expected = hashes
             .get(&filename)

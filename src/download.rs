@@ -8,7 +8,26 @@ use sha2::{Digest, Sha256};
 const USER_AGENT: &str = concat!("atomic-installer/", env!("CARGO_PKG_VERSION"));
 
 /// Downloads a URL to a file, printing a progress line when the size is known.
-pub fn download_to_file(url: &str, dest: &Path, label: &str) -> Result<(), anyhow::Error> {
+pub fn download_to_file(
+    url: &str,
+    dest: &Path,
+    label: &str,
+    retries: u32,
+) -> Result<(), anyhow::Error> {
+    let mut last_err = None;
+    for attempt in 0..=retries {
+        if attempt > 0 {
+            println!("[WARN] retrying {label} (attempt {})", attempt + 1);
+        }
+        match download_to_file_once(url, dest, label) {
+            Ok(()) => return Ok(()),
+            Err(e) => last_err = Some(e),
+        }
+    }
+    Err(last_err.unwrap())
+}
+
+fn download_to_file_once(url: &str, dest: &Path, label: &str) -> Result<(), anyhow::Error> {
     let resp = ureq::get(url)
         .set("User-Agent", USER_AGENT)
         .call()
@@ -49,7 +68,21 @@ pub fn download_to_file(url: &str, dest: &Path, label: &str) -> Result<(), anyho
 }
 
 /// Downloads a URL into memory and returns the raw bytes.
-pub fn download_bytes(url: &str, label: &str) -> Result<Vec<u8>, anyhow::Error> {
+pub fn download_bytes(url: &str, label: &str, retries: u32) -> Result<Vec<u8>, anyhow::Error> {
+    let mut last_err = None;
+    for attempt in 0..=retries {
+        if attempt > 0 {
+            println!("[WARN] retrying {label} (attempt {})", attempt + 1);
+        }
+        match download_bytes_once(url, label) {
+            Ok(b) => return Ok(b),
+            Err(e) => last_err = Some(e),
+        }
+    }
+    Err(last_err.unwrap())
+}
+
+fn download_bytes_once(url: &str, label: &str) -> Result<Vec<u8>, anyhow::Error> {
     let resp = ureq::get(url)
         .set("User-Agent", USER_AGENT)
         .call()
