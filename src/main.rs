@@ -26,7 +26,7 @@ fn main() {
     };
     exit(code);
 }
-
+#[allow(clippy::collapsible_if)]
 fn real_main() -> Result<(), anyhow::Error> {
     let raw: Vec<String> = std::env::args().collect();
     let args = match cli::parse(&raw) {
@@ -95,7 +95,24 @@ fn real_main() -> Result<(), anyhow::Error> {
         return Ok(());
     }
 
-    if !args.force && pwsh_works(&pwsh_link)? {
+    #[allow(clippy::collapsible_if)]
+    let mut force = args.force;
+    if args.upgrade && !force && pwsh_link.exists() {
+        if let Ok(out) = std::process::Command::new(&pwsh_link).arg("-v").output() {
+            let installed = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            if let Ok(rel) = github::fetch_release(args.version.as_deref()) {
+                if installed != rel.version {
+                    println!(
+                        "[INFO] upgrade: installed {installed} != latest {}; reinstalling",
+                        rel.version
+                    );
+                    force = true;
+                }
+            }
+        }
+    }
+
+    if !force && pwsh_works(&pwsh_link)? {
         println!("[INFO] pwsh is already installed and working; skipping the PowerShell install");
     } else {
         install_powershell(
@@ -104,7 +121,7 @@ fn real_main() -> Result<(), anyhow::Error> {
             &bin_dir,
             &pwsh_link,
             &pwsh_binary,
-            args.force,
+            force,
             args.version.as_deref(),
             args.keep_archive,
             args.retries,
@@ -125,6 +142,17 @@ fn real_main() -> Result<(), anyhow::Error> {
         "[INFO] {}",
         atomic_summary_line(args.skip_atomic, args.no_atomics_repo)
     );
+    if args.json {
+        println!(
+            "{}",
+            serde_json::json!({
+                "pwsh_binary": pwsh_binary.display().to_string(),
+                "pwsh_link": pwsh_link.display().to_string(),
+                "skip_atomic": args.skip_atomic,
+                "no_atomics_repo": args.no_atomics_repo,
+            })
+        );
+    }
     Ok(())
 }
 
