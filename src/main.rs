@@ -97,6 +97,7 @@ fn real_main() -> Result<(), anyhow::Error> {
             &pwsh_binary,
             args.force,
             args.version.as_deref(),
+            args.keep_archive,
         )?;
     }
 
@@ -182,6 +183,7 @@ fn path_any_exists(path: &Path) -> bool {
     std::fs::symlink_metadata(path).is_ok()
 }
 
+#[allow(clippy::too_many_arguments)]
 fn install_powershell(
     platform: &pattern::Platform,
     install_dir: &Path,
@@ -190,6 +192,7 @@ fn install_powershell(
     pwsh_binary: &Path,
     force: bool,
     version: Option<&str>,
+    keep_archive: bool,
 ) -> Result<(), anyhow::Error> {
     println!("[INFO] fetching the PowerShell release from GitHub");
     let release = github::fetch_release(version)?;
@@ -258,7 +261,11 @@ fn install_powershell(
         Ok(())
     })();
 
-    let _ = std::fs::remove_file(&tmp);
+    if keep_archive {
+        println!("[INFO] kept archive at {}", tmp.display());
+    } else {
+        let _ = std::fs::remove_file(&tmp);
+    }
     result?;
 
     fsutil::ensure_dir(bin_dir)?;
