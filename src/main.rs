@@ -43,6 +43,11 @@ fn real_main() -> Result<(), anyhow::Error> {
         }
     };
 
+    if let Some(sh) = &args.completions {
+        print!("{}", completion_script(sh));
+        return Ok(());
+    }
+
     println!("=== atomic-installer ===");
     println!(
         "[INFO] installs PowerShell from the latest GitHub release, links pwsh, and installs Atomic Red Team"
@@ -249,6 +254,18 @@ fn uninstall_with_ask(
 }
 
 /// True when the path exists, including as a dangling symlink.
+fn completion_script(shell: &str) -> &'static str {
+    match shell {
+        "zsh" => {
+            "#compdef atomic-installer\n_atomic_installer() { _arguments '*: :(' ; }\ncompdef _atomic_installer atomic-installer\n"
+        }
+        "fish" => {
+            "complete -c atomic-installer -l os -a 'macos linux'\ncomplete -c atomic-installer -l arch -a 'arm x86'\ncomplete -c atomic-installer -l bit -a '32 64'\n"
+        }
+        _ => "atomic-installer() { :; }\ncomplete -F atomic-installer atomic-installer\n",
+    }
+}
+
 fn path_any_exists(path: &Path) -> bool {
     std::fs::symlink_metadata(path).is_ok()
 }
