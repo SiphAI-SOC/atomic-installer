@@ -68,10 +68,7 @@ mod tests {
 
     #[test]
     fn install_command_includes_get_atomics() {
-        assert!(
-            install_command(true, false).ends_with("-getAtomics")
-                || install_command(true, false).contains("-getAtomics")
-        );
+        assert!(install_command(true, false).ends_with(" -getAtomics"));
     }
 
     #[test]

@@ -106,7 +106,7 @@ fn real_main() -> Result<(), anyhow::Error> {
         if let Ok(out) = std::process::Command::new(&pwsh_link).arg("-v").output() {
             let installed = String::from_utf8_lossy(&out.stdout).trim().to_string();
             if let Ok(rel) = github::fetch_release(args.version.as_deref()) {
-                if installed != rel.version {
+                if !installed.contains(&rel.version) {
                     println!(
                         "[INFO] upgrade: installed {installed} != latest {}; reinstalling",
                         rel.version
@@ -199,7 +199,7 @@ fn uninstall(install_dir: &Path, pwsh_link: &Path) -> Result<(), anyhow::Error> 
 
 fn check_install(install_dir: &Path, pwsh_link: &Path) -> Result<(), anyhow::Error> {
     let mut ok = true;
-    if install_dir.exists() {
+    if path_any_exists(install_dir) {
         println!("[INFO] install dir present: {}", install_dir.display());
     } else {
         println!("[WARN] install dir missing: {}", install_dir.display());
