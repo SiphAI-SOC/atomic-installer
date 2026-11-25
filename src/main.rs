@@ -114,7 +114,7 @@ fn real_main() -> Result<(), anyhow::Error> {
     if args.skip_atomic {
         println!("[INFO] --skip-atomic given; not installing Atomic Red Team");
     } else {
-        atomic::run_atomic_install(&pwsh_link, !args.no_atomics_repo)?;
+        atomic::run_atomic_install(&pwsh_link, !args.no_atomics_repo, args.get_prereqs)?;
     }
 
     println!();

@@ -17,6 +17,7 @@ pub struct Args {
     pub quiet: bool,
     pub retries: u32,
     pub prefix: Option<String>,
+    pub get_prereqs: bool,
 }
 
 pub enum CliOutcome {
@@ -53,6 +54,7 @@ pub fn parse(args: &[String]) -> Result<CliOutcome, String> {
                 let v = it.next().ok_or("--prefix requires a value")?;
                 out.prefix = Some(v.clone());
             }
+            "--get-prereqs" => out.get_prereqs = true,
             "--os" => {
                 let v = it.next().ok_or("--os requires a value (macos|linux)")?;
                 out.os =
@@ -88,7 +90,7 @@ pub fn usage() -> String {
          \n\
          USAGE:\n    atomic-installer [OPTIONS]\n\
          \n\
-         OPTIONS:\n    --os <macos|linux>      Operating system (default: detect or prompt)\n    --arch <arm|x86>        CPU architecture (default: detect or prompt)\n    --bit <32|64>           Bit type (default: detect or prompt)\n    -a, --auto              Auto-select platform from host detection (falls back to prompts if undetectable)\n    -u, --uninstall         Uninstall pwsh and Atomic Red Team instead of installing\n    --force                 Reinstall pwsh even if already working\n    --skip-atomic           Stop after pwsh is verified; skip Atomic Red Team\n    --no-atomics-repo       Skip downloading the atomics repository (module only)\n    --version <tag>         Install a specific PowerShell release (e.g. v7.6.4)\n    --dry-run               Fetch release metadata and print the plan; do not install\n    --keep-archive          Keep the downloaded .tar.gz after extraction\n    --check                 Verify the existing pwsh/Atomic Red Team install; no network\n    --quiet                 Suppress informational output\n    --retries <n>           Retry count for network downloads (default 0)\n    --prefix <dir>          Install root (default ~/.local)\n    -h, --help              Print this help text\n",
+         OPTIONS:\n    --os <macos|linux>      Operating system (default: detect or prompt)\n    --arch <arm|x86>        CPU architecture (default: detect or prompt)\n    --bit <32|64>           Bit type (default: detect or prompt)\n    -a, --auto              Auto-select platform from host detection (falls back to prompts if undetectable)\n    -u, --uninstall         Uninstall pwsh and Atomic Red Team instead of installing\n    --force                 Reinstall pwsh even if already working\n    --skip-atomic           Stop after pwsh is verified; skip Atomic Red Team\n    --no-atomics-repo       Skip downloading the atomics repository (module only)\n    --version <tag>         Install a specific PowerShell release (e.g. v7.6.4)\n    --dry-run               Fetch release metadata and print the plan; do not install\n    --keep-archive          Keep the downloaded .tar.gz after extraction\n    --check                 Verify the existing pwsh/Atomic Red Team install; no network\n    --quiet                 Suppress informational output\n    --retries <n>           Retry count for network downloads (default 0)\n    --prefix <dir>          Install root (default ~/.local)\n    --get-prereqs           Install Atomic Red Team prerequisites\n    -h, --help              Print this help text\n",
         env!("CARGO_PKG_VERSION")
     )
 }
