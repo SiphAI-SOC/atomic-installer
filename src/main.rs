@@ -49,10 +49,15 @@ fn real_main() -> Result<(), anyhow::Error> {
     );
     println!();
 
-    let home = std::env::var("HOME").context("HOME environment variable is not set")?;
-    let home = PathBuf::from(home);
-    let install_dir = home.join(".local/share/powershell");
-    let bin_dir = home.join(".local/bin");
+    let root = match &args.prefix {
+        Some(p) => PathBuf::from(p),
+        None => {
+            let home = std::env::var("HOME").context("HOME environment variable is not set")?;
+            PathBuf::from(home).join(".local")
+        }
+    };
+    let install_dir = root.join("share/powershell");
+    let bin_dir = root.join("bin");
     let pwsh_link = bin_dir.join("pwsh");
     let pwsh_binary = install_dir.join("pwsh");
 
