@@ -3,8 +3,22 @@ use std::collections::HashMap;
 use anyhow::Context;
 use serde::Deserialize;
 
-const API_URL: &str = "https://api.github.com/repos/PowerShell/PowerShell/releases/latest";
+const LATEST_URL: &str = "https://api.github.com/repos/PowerShell/PowerShell/releases/latest";
 const USER_AGENT: &str = concat!("atomic-installer/", env!("CARGO_PKG_VERSION"));
+
+fn release_url(tag: Option<&str>) -> String {
+    match tag {
+        None => LATEST_URL.to_string(),
+        Some(t) => {
+            let tag = if t.starts_with('v') {
+                t.to_string()
+            } else {
+                format!("v{t}")
+            };
+            format!("https://api.github.com/repos/PowerShell/PowerShell/releases/tags/{tag}")
+        }
+    }
+}
 
 #[derive(Debug, Deserialize)]
 struct ApiRelease {
@@ -31,12 +45,13 @@ pub struct Release {
     pub assets: Vec<Asset>,
 }
 
-pub fn fetch_latest_release() -> Result<Release, anyhow::Error> {
-    let body = ureq::get(API_URL)
+pub fn fetch_release(tag: Option<&str>) -> Result<Release, anyhow::Error> {
+    let url = release_url(tag);
+    let body = ureq::get(&url)
         .set("User-Agent", USER_AGENT)
         .set("Accept", "application/vnd.github+json")
         .call()
-        .context("failed to query the GitHub API for the latest PowerShell release")?
+        .with_context(|| format!("failed to query the GitHub API for PowerShell release {url}"))?
         .into_string()
         .context("failed to read the GitHub API response")?;
     parse_release_json(&body)

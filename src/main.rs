@@ -68,6 +68,24 @@ fn real_main() -> Result<(), anyhow::Error> {
         platform.token()
     );
 
+    if args.dry_run {
+        println!("[INFO] dry run: fetching release metadata only");
+        let release = github::fetch_release(args.version.as_deref())?;
+        println!(
+            "[INFO] latest release: {} (version {})",
+            release.tag, release.version
+        );
+        let filename = platform.asset_filename(&release.version);
+        match github::find_asset(&release.assets, &filename) {
+            Some(a) => println!("[INFO] would download: {} ({})", a.name, a.url),
+            None => println!("[WARN] no asset matching {filename}"),
+        }
+        if let Some(a) = github::find_asset(&release.assets, "hashes.sha256") {
+            println!("[INFO] checksums: {}", a.url);
+        }
+        return Ok(());
+    }
+
     if !args.force && pwsh_works(&pwsh_link)? {
         println!("[INFO] pwsh is already installed and working; skipping the PowerShell install");
     } else {
@@ -78,6 +96,7 @@ fn real_main() -> Result<(), anyhow::Error> {
             &pwsh_link,
             &pwsh_binary,
             args.force,
+            args.version.as_deref(),
         )?;
     }
 
@@ -170,9 +189,10 @@ fn install_powershell(
     pwsh_link: &Path,
     pwsh_binary: &Path,
     force: bool,
+    version: Option<&str>,
 ) -> Result<(), anyhow::Error> {
-    println!("[INFO] fetching the latest PowerShell release from GitHub");
-    let release = github::fetch_latest_release()?;
+    println!("[INFO] fetching the PowerShell release from GitHub");
+    let release = github::fetch_release(version)?;
     println!(
         "[INFO] latest release: {} (version {})",
         release.tag, release.version
